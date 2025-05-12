@@ -21,7 +21,7 @@ import ChallengeInfo from './component/challenges/ChallengeInfo';
 import MyparticipantChallenge from './component/challenges/MyparticipantChallenge';
 import DeleteChallenge from './component/challenges/DeleteChallenge';
 import OtheruserProfile from './pages/user-info/OtheruserProfile';
-import Leaderboard from './component/leaderboard';
+import Leaderboard from './component/Leaderboard';
 import { Loader } from 'lucide-react';
  
 function App() {
