@@ -12,7 +12,10 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 // Enable CORS when frontend is ready
-app.use(cors());
+app.use(cors({
+  origin: 'https://task-arena-z3oy.vercel.app',
+  credentials: true, // If you're using cookies or auth headers
+}));
 
 connectToDB();
 
