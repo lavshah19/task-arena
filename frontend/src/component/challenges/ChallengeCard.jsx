@@ -199,7 +199,8 @@ const handleDelete = async () => {
               <span>Delete</span>
             </button>
           </>
-        ) : isParticipant  ? (
+        ) :challenge.status!=="completed" && (  
+         isParticipant ?  (
           <button
             onClick={handleLeave}
             className="px-3 py-1.5 text-sm rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors flex items-center gap-1"
@@ -215,7 +216,7 @@ const handleDelete = async () => {
             <LogIn className="w-4 h-4" />
             <span>Join</span>
           </button>
-        )}
+        ))}
       </div>
     </div>
   );
