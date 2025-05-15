@@ -1,96 +1,87 @@
-🏟️ Task Arena
-Task Arena is a full-stack productivity web app that combines challenge-based goal tracking with a robust personal task manager. It helps users stay organized, compete with others, and build habits through challenges — all in one clean and powerful interface.
+# 🏟️ Task Arena
 
-🚀 Features
-🔥 Challenge Arena
-Create Public Challenges with titles, descriptions, points, and optional bonus points.
+![Task Arena Preview](./frontend/public/taskarenahome.png)
 
-Join or Leave Challenges at any time.
 
-Submit Challenge Progress, which can be updated or deleted.
 
-Voting System: Users can vote on submissions. Each vote = 1 point.
+**Task Arena** is a full-stack productivity web application that combines challenge-based goal tracking with a powerful personal task manager. Whether you're working solo or competing with others, Task Arena helps you stay focused, motivated, and organized — all within a clean and intuitive interface.
 
-Leaderboard & Winner Display: After the challenge ends, the user with the most points is declared the winner.
+---
 
-Edit Challenges: Creators can update or soft-delete their challenges.
+## 🚀 Key Features
 
-Soft Delete & Recovery: Challenges can be restored or permanently deleted later.
+### 🔥 Challenge Arena
+- **Create Public Challenges**: Add titles, descriptions, points, and optional bonus points.
+- **Join/Leave Anytime**: Participate in challenges freely.
+- **Submit Progress**: Track your updates, edit, or delete submissions as needed.
+- **Voting System**: Users vote on progress submissions. Each vote = 1 point.
+- **Leaderboard & Winner Display**: Automatically declares the winner when a challenge ends.
+- **Challenge Editing**: Creators can edit or soft-delete their challenges.
+- **Soft Delete & Recovery**: Restore or permanently delete challenges.
+- **My Challenges**: View challenges you’ve created or joined.
+- **Top Users Leaderboard**: Ranks users based on total points across all challenges.
 
-My Challenges: View all challenges you’ve created or joined.
+![Task Arena challenge Preview](./frontend/public/taskarenachallenge.png)
 
-Top Users Leaderboard: Ranks users based on total points from all challenges.
+### ✅ Personal Task Manager
+- **Create Detailed Tasks**: Include title, description, due date, priority, and tags.
+- **Due Date Lock**: Prevent due date from being edited accidentally.
+- **Task Editing**: Update task details anytime.
+- **Completion Status**: Toggle between Completed and Pending.
+- **Soft Delete with Recycle Bin**: Temporarily remove tasks and recover them later.
+- **Permanent Deletion**: Remove tasks completely when no longer needed.
+- **Live Countdown Timer**: Track time left until due dates in real-time.
+- **Tag-Based Organization**: Use tags for better task management and filtering.
+![ Personal Task Manager](./frontend/public/task.png)
 
-✅ Personal Task Manager
-Create Tasks with title, description, due date, priority, and tags.
+---
 
-Due Date Lock: Option to lock due date from editing.
+## 🛠️ Tech Stack
 
-Edit or Update Tasks anytime.
+### Frontend
+- **React**
+- **Tailwind CSS**
+- **React Router**
+- **Axios**
 
-Mark as Complete or Pending to track status.
+### Backend
+- **Node.js**
+- **Express.js**
+- **MongoDB** with **Mongoose**
 
-Soft Delete & Recycle Bin: Tasks can be temporarily deleted and recovered later.
+### Authentication & State
+- **JWT (JSON Web Token)**
+- **React Context API** for auth state management
 
-Permanent Deletion: Fully remove tasks when no longer needed.
+### Other Libraries
+- **bcrypt** (password hashing)
+- **multer** (file uploads)
+- **dayjs** (date/time formatting)
 
-Real-Time Countdown: Live timer shows how much time is left until due.
+---
 
-Organize with Tags: Categorize tasks for better focus.
+## 📦 Getting Started
 
-🛠️ Tech Stack
-Frontend:
-
-React
-
-Tailwind CSS
-
-React Router
-
-Axios
-
-Backend:
-
-Node.js
-
-Express.js
-
-MongoDB
-
-Mongoose
-
-Authentication:
-
-JWT (JSON Web Token)
-
-Context API for auth state
-
-Other Libraries:
-
-bcrypt
-
-multer
-
-dayjs
-
-📦 Getting Started
-Clone the Repository
+### Clone the Repository
+```bash
 git clone https://github.com/your-username/task-arena.git
 cd task-arena
 
-Backend Setup
-
+## Backend Setup
 cd backend
 npm install
 npm run dev
 
-Frontend Setup
+## Frontend Setup
 cd frontend
 npm install
 npm run dev
 
+
 🔐 Environment Variables
-Before running the project, create a .env file in the root directory and add the following environment variables:
+Create a .env file in both backend and frontend directories with the following:
+
+Backend (/backend/.env)
 
 PORT=3000
 MONGOOSE_URL=your_mongodb_connection_string
@@ -99,23 +90,34 @@ CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 JWT_SECRET_KEY=your_jwt_secret_key
 
-VITE_API_URL=http://localhost:3000/api  //for frontend .env
 
-🔐 Auth & Access
-JWT tokens are used for protected routes and authentication.
+Frontend (/frontend/.env)
+VITE_API_URL=http://localhost:3000/api
 
-Users must log in to create/join challenges, manage tasks, and vote.
+🔐 Authentication & Access Control
+All user-specific features (challenges, tasks, voting) require login.
 
-🏆 Leaderboard
-Displays top 10 users with the highest accumulated points.
+JWT tokens are used to secure API requests.
 
-Each leaderboard item includes: username, profile image, and total points.
+Auth state is managed globally using React Context.
 
-Automatically filters out banned accounts.
+🏆 Leaderboard Highlights
+Shows top 10 users by total challenge points.
 
-🤝 Contributions
-Got ideas or improvements? Feel free to fork, open issues, or submit a pull request!
+Displays username, profile image, and score.
+
+Automatically excludes banned accounts.
+
+🤝 Contributing
+Want to help improve Task Arena?
+
+Fork the repository
+
+Submit issues or feature requests
+
+Open a pull request with improvements
+
+All contributions are welcome!
 
 📄 License
 This project is licensed under the MIT License.
-
