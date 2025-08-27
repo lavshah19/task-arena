@@ -5,7 +5,7 @@ const connectToDB = require('./database/db');
 const userRoute=require('./routes/user_route');
 const taskRoute=require('./routes/task_route');
 const challengeRoute=require('./routes/challenge_route');
-const finalizeChallenges = require('./corn/finalizeChallenges');      // Uncomment if you want to use cron job
+// const finalizeChallenges = require('./corn/finalizeChallenges');      // Uncomment if you want to use cron job
 
 const app = express();
 const PORT = process.env.PORT || 3000;
