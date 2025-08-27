@@ -20,6 +20,9 @@ import MyparticipantChallenge from './component/challenges/MyparticipantChalleng
 import DeleteChallenge from './component/challenges/DeleteChallenge';
 import OtheruserProfile from './pages/user-info/OtheruserProfile';
 import Leaderboard from './component/Leaderboard';
+import PrivateChallengeJoin from './component/challenges/private/PrivateChallengeJoin';
+import { ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const { token } = useAuth();
@@ -103,7 +106,16 @@ function App() {
           path="/leaderboard"
           element={token ? <Leaderboard /> : <Navigate to="/login" replace />}
         />
+           <Route
+          path="/join-private/:inviteCode"
+          element={token ? <PrivateChallengeJoin /> : <Navigate to="/login" replace />}
+        />
       </Routes>
+       <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+      />
     </div>
   );
 }

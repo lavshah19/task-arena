@@ -6,6 +6,7 @@ import ChallengeDetails from "./ChallengeDetails";
 import UserProgressSection from "./UserProgressSection ";
 import ParticipantsSection from "./ParticipantsSection";
 import { Loader, AlertCircle } from "lucide-react";
+ import { useChallengeApi } from "../../api/challengeApi";
 
 const ChallengeInfo = () => {
   const { id } = useParams();
@@ -13,18 +14,14 @@ const ChallengeInfo = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const baseUrl = import.meta.env.VITE_API_URL;
+  const { fetchChallengeById,joinChallenge,leaveChallenge } = useChallengeApi();
 
   const fetchChallenge = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        `${baseUrl}/challenge/get/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetchChallengeById(id);
       setChallenge(res.data.challenge);
       setError(null);
     } catch (err) {
@@ -42,13 +39,7 @@ const ChallengeInfo = () => {
   const handleJoin = async () => {
     try {
       setActionLoading(true);
-      await axios.post(
-        `${baseUrl}/challenge/join/${id}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await joinChallenge(id);
       await fetchChallenge();
     } catch (err) {
       console.error("Error joining challenge:", err);
@@ -61,13 +52,7 @@ const ChallengeInfo = () => {
   const handleLeave = async () => {
     try {
       setActionLoading(true);
-      await axios.post(
-        `${baseUrl}/challenge/leave/${id}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await leaveChallenge(id);
       await fetchChallenge();
     } catch (err) {
       console.error("Error leaving challenge:", err);

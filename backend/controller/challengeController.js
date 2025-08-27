@@ -1,12 +1,40 @@
+const { uploadToCloudinary } = require("../helpers/cloudinaryHelpers");
 const Challenge = require("../models/challenge");
 const User = require("../models/User");
+const fs = require("fs");
+const cloudinary = require("../config/cloudinary");
 
 // Create a new challenge
 const createChallenge = async (req, res) => {
   try {
-    const { title, description, dueDate,points,bonusPoints } = req.body;
+    const { title, description, dueDate, points, bonusPoints, isPrivate } = req.body;
+    // check if due date is provided and is a valid date
+    if (!dueDate || isNaN(new Date(dueDate))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing due date",
+      });
+    }
+    // check if due date is in the past
+    if (new Date(dueDate) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Due date cannot be in the past",
+      });
+    }
     const creatorId = req.userInfo.userId; // assumed to be ObjectId or string
-
+    let inviteCode = null;
+      let uniqueCode = false;
+    if (isPrivate) {
+      
+      while (!uniqueCode) {
+        inviteCode = Math.random().toString(36).substring(2, 10);
+        const existingChallenge = await Challenge.findOne({ inviteCode });
+        if (!existingChallenge) {
+          uniqueCode = true; // Found a unique invite code
+        }
+      }
+    }
     const challenge = new Challenge({
       // should use "new Challenge", not "await Challenge(...)" i always forgot reminder
       creator: creatorId,
@@ -16,6 +44,8 @@ const createChallenge = async (req, res) => {
       points,
       bonusPoints,
       participants: [creatorId],
+      isPrivate: isPrivate || false, // default to false if not provided
+      inviteCode: isPrivate ? inviteCode : undefined, // only set invite code if private
     });
 
     await challenge.save();
@@ -73,7 +103,7 @@ const deleteChallenge = async (req, res) => {
 
 const getAllChallenges = async (req, res) => {
   try {
-    const challenges = await Challenge.find({ isDeleted: false }) // exclude soft-deleted
+    const challenges = await Challenge.find({ isDeleted: false,isPrivate:false }) // exclude soft-deleted
       .populate("creator", "username profileImage") // optional: include creator info
       .populate("participants", "username points") // optional
       .sort({ createdAt: -1 }); // latest first
@@ -109,7 +139,10 @@ const getSingleChallenge = async (req, res) => {
       .populate("creator", "username profileImage")
       .populate("participants", "username points profileImage")
       .populate("winner", "username profileImage")
-      .populate("userProgress" , "user completed pointsEarned submissionLink notes completedAt")
+      .populate(
+        "userProgress",
+        "user completed pointsEarned submissionLink notes completedAt"
+      )
       .populate("userProgress.user", "username profileImage _id ")
       .sort({ createdAt: -1 });
 
@@ -133,10 +166,106 @@ const getSingleChallenge = async (req, res) => {
   }
 };
 
+const getPrivateChallenge = async (req, res) => {
+  try {
+    const { inviteCode } = req.params; // Get invite code from URL params
+    if (!inviteCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Invite url is not valid or missing",
+      });
+    }
+    const challenge = await Challenge.findOne({
+      inviteCode,
+      isDeleted: false, // Ensure it's not soft-deleted
+      isPrivate: true, // Ensure it's a private challenge
+    })
+      .populate("creator", "username profileImage")
+      .populate("participants", "username points profileImage")
+      .populate("winner", "username profileImage")
+    if (!challenge) {
+      return res.status(404).json({
+        success: false,
+        message: "Private challenge not found or already deleted",
+      });
+    }
+
+    // if challenge pass it due date is in the past, then return error
+    if (challenge.dueDate < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "This private challenge has already ended",
+      });
+    }
+    
+    const alreadyJoined = challenge.participants.some(
+  (participant) => participant._id.toString() === req.userInfo.userId
+);
+    // If the user already joined the challenge, no need to check userId
+    if (alreadyJoined) {
+      // If the user is participant, say already joined
+      return res.status(200).json({
+        success: true,
+        message: "You have already joined this private challenge",
+        challenge,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+
+      challenge,
+    });
+  } catch (error) {
+    console.error("Get Private Challenge Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching private challenge",
+    });
+  }
+};
+const getAllPrivateChallenges = async (req, res) => {
+  try {
+    const userId = req.userInfo.userId;
+    const challenges = await Challenge.find({
+      isPrivate: true,
+      isDeleted: false, // Ensure it's not soft-deleted
+      participants: userId, // Only get challenges where the user is a participant
+    })
+      .populate("creator", "username profileImage")
+      .populate("participants", "username points profileImage")
+      .populate("winner", "username profileImage")
+      .populate(
+        "userProgress",
+        "user completed pointsEarned submissionLink notes completedAt"
+      )
+      .populate("userProgress.user", "username profileImage _id ")
+      .sort({ createdAt: -1 });
+    if (!challenges || challenges.length === 0) {
+      return res.status(200).json({
+        success: true,
+        challenges: [],
+        message: "No private challenges found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      challenges,
+    });
+  } catch (error) {
+    console.error("Get All Private Challenges Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching private challenges",
+    });
+  }
+};
+
 const updateChallenge = async (req, res) => {
   try {
     const challengeId = req.params.id;
     const userId = req.userInfo.userId;
+    
 
     const challenge = await Challenge.findById(challengeId);
     if (!challenge || challenge.isDeleted) {
@@ -153,7 +282,8 @@ const updateChallenge = async (req, res) => {
       });
     }
 
-    const { title, description, dueDate, status,points,bonusPoints } = req.body;
+    const { title, description, dueDate, status, points, bonusPoints } =
+      req.body;
 
     // Check if title is provided and not empty
     if (title !== undefined && title.trim() !== "") {
@@ -165,14 +295,23 @@ const updateChallenge = async (req, res) => {
       challenge.description = description;
     }
     // Check if points is provided and valid
-    if (points !== undefined && points > 0 && points <= 100 && Number.isInteger(points)) {
+    if (
+      points !== undefined &&
+      points > 0 &&
+      points <= 100 &&
+      Number.isInteger(points)
+    ) {
       challenge.points = points;
     }
     // Check if bonusPoints is provided and valid
-    if (bonusPoints !== undefined && bonusPoints >= 0 && bonusPoints <= 100 && Number.isInteger(bonusPoints)) {
+    if (
+      bonusPoints !== undefined &&
+      bonusPoints >= 0 &&
+      bonusPoints <= 100 &&
+      Number.isInteger(bonusPoints)
+    ) {
       challenge.bonusPoints = bonusPoints;
     }
-    
 
     // Check if dueDate is provided and not empty, and also check if it's a valid future date
     if (dueDate !== undefined && dueDate.trim() !== "") {
@@ -298,7 +437,7 @@ const leaveChallenge = async (req, res) => {
     );
 
     // If no participants remain, reset status to pending
-    if (challenge.participants.length <=1) {
+    if (challenge.participants.length <= 1) {
       challenge.status = "pending";
     }
 
@@ -340,10 +479,32 @@ const createChallengeProgress = async (req, res) => {
         message: "You are not a participant in this challenge",
       });
     }
+    // Check if the user has already submitted progress
+    const existingProgress = challenge.userProgress.find((progress) =>
+      progress.user.equals(userId)
+    );
+    if (existingProgress) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already submitted progress for this challenge",
+      });
+    }
+    // file upload 
+    let submissionFileUrl =  null;
+    let submissionFilePublicId = null;
+    if (req.file) {
+      const file = req.file; // multer adds the file to req.file
+    const {url,publicId}= await uploadToCloudinary(file.path);
+      submissionFileUrl = url; // URL of the uploaded file
+      submissionFilePublicId = publicId; // Public ID for the file in cloud storage
+      // Optionally, delete the local file after upload
+      // fs.unlinkSync(file.path); // Uncomment if you want to delete the local file
+    }
+
 
     const isCompleted = completed === true;
     let earnedPoints = challenge.points || 10;
-    const bonusPoints = challenge.bonusPoints || 0;
+    const bonusPoints = challenge.bonusPoints || 1;
 
     // Check if someone has already completed the challenge
     const someoneCompleted = challenge.userProgress.some((p) => p.completed);
@@ -359,6 +520,8 @@ const createChallengeProgress = async (req, res) => {
       submissionLink: submissionLink?.trim() || "",
       notes: notes?.trim() || "",
       completedAt: isCompleted ? new Date() : null,
+      submissionFileUrl: submissionFileUrl || null, // URL of the uploaded file
+      submissionFilePublicId: submissionFilePublicId || null, // Public ID for the file in cloud storage
     };
 
     challenge.userProgress.push(userProgress);
@@ -412,7 +575,20 @@ const updateChallengeProgress = async (req, res) => {
         message: "No progress found for this user in this challenge",
       });
     }
-
+if(req.file){
+  if( userProgress.submissionFilePublicId) {
+      // If there's an existing file, delete it from cloud storage
+      await cloudinary.uploader.destroy(userProgress.submissionFilePublicId);
+    }   
+    // Upload the new file to cloud storage
+    const file = req.file; // multer adds the file to req.file
+    const { url, publicId } = await uploadToCloudinary(file.path);
+    userProgress.submissionFileUrl = url; // URL of the uploaded file
+    userProgress.submissionFilePublicId = publicId; // Public ID for the file in cloud storage
+    // Optionally, delete the local file after upload
+    // fs.unlinkSync(file.path); // Uncomment if you want to delete the local file
+    
+}
     // Determine base and bonus points
     let earnedPoints = challenge.points || 10;
     const bonusPoints = challenge.bonusPoints || 0;
@@ -450,7 +626,6 @@ const updateChallengeProgress = async (req, res) => {
   }
 };
 
-
 const removeChallengeProgress = async (req, res) => {
   try {
     const challengeId = req.params.id;
@@ -472,7 +647,21 @@ const removeChallengeProgress = async (req, res) => {
         message: "You are not a participant in this challenge",
       });
     }
-
+    // also delete from cloudinary if file exists
+    const userProgress = challenge.userProgress.find((progress) =>
+      progress.user.equals(userId)
+    );
+    if (!userProgress) {
+      return res.status(404).json({
+        success: false,
+        message: "No progress found for this user in this challenge",
+      });
+    }
+    // If there's an existing file, delete it from cloud storage
+    if (userProgress.submissionFilePublicId) {
+      await cloudinary.uploader.destroy(userProgress.submissionFilePublicId);
+    }
+    // Remove the user's progress from the challenge
     // Filter out the user's progress
     const originalLength = challenge.userProgress.length;
     challenge.userProgress = challenge.userProgress.filter(
@@ -501,7 +690,6 @@ const removeChallengeProgress = async (req, res) => {
     });
   }
 };
-
 
 const voteForParticipant = async (req, res) => {
   try {
@@ -689,7 +877,6 @@ const ChallengeWinner = async (req, res) => {
   }
 };
 
-
 // const  flagChallenge=async(req,res)=>{
 //     try{
 
@@ -705,6 +892,7 @@ const myParticipantChallenges = async (req, res) => {
     const challenges = await Challenge.find({
       participants: userId,
       isDeleted: false,
+      isPrivate: false, // Only get public challenges
     })
       .sort({ dueDate: -1 })
       .populate("creator", "username profileImage")
@@ -767,8 +955,11 @@ const softDeleteChallenges = async (req, res) => {
 
 const getAllSoftDeletedChallenges = async (req, res) => {
   try {
-     const userId = req.userInfo.userId;
-    const challenges = await Challenge.find({ isDeleted: true , creator:userId }) // include soft-deleted
+    const userId = req.userInfo.userId;
+    const challenges = await Challenge.find({
+      isDeleted: true,
+      creator: userId,
+    }) // include soft-deleted
       .populate("creator", "username profileImage") // optional: include creator info
       .populate("participants", "username points") // optional
       .sort({ createdAt: -1 }); // latest first
@@ -796,7 +987,7 @@ const getAllSoftDeletedChallenges = async (req, res) => {
 const recoverSoftDeletedChallenge = async (req, res) => {
   try {
     const { id } = req.params;
-     const userId = req.userInfo.userId;
+    const userId = req.userInfo.userId;
     // Find the challenge by ID
     const challenge = await Challenge.findById(id);
 
@@ -813,7 +1004,7 @@ const recoverSoftDeletedChallenge = async (req, res) => {
         message: "Challenge is already active",
       });
     }
-      if (!challenge.creator.equals(userId)) {
+    if (!challenge.creator.equals(userId)) {
       return res.status(403).json({
         success: false,
         message: "Only the creator can recover deleted  challenge",
@@ -838,6 +1029,9 @@ const recoverSoftDeletedChallenge = async (req, res) => {
   }
 };
 
+
+
+
 module.exports = {
   createChallenge,
   deleteChallenge,
@@ -854,5 +1048,7 @@ module.exports = {
   softDeleteChallenges,
   getAllSoftDeletedChallenges,
   recoverSoftDeletedChallenge,
-  removeChallengeProgress
+  removeChallengeProgress,
+  getPrivateChallenge,
+  getAllPrivateChallenges,
 };

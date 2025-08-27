@@ -16,6 +16,14 @@ const userProgressSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    submissionFileUrl: {
+      type: String, // URL or path to the file submitted
+      default: null, // null if no file submitted
+    },
+    submissionFilePublicId: {
+      type: String, // public ID for the file in cloud storage (if applicable)
+      default: null, // null if no file submitted
+    },
     submissionLink: String, // optional: if they submit code or file
     notes: String, // optional: explanation or summary
   },
@@ -34,6 +42,7 @@ const challengeSchema = new mongoose.Schema(
       required: true,
       trim: true,
       default: "",
+
     },
     description: {
       type:String,
@@ -93,8 +102,19 @@ const challengeSchema = new mongoose.Schema(
       type: Number,
       default: 1, // bonus for first completer
     },
+    isPrivate: {
+      type: Boolean,
+      default: false, // if true, only participants can see it
+    },
+    inviteCode: {
+      type: String,
+      unique: true, // ensure invite codes are unique
+      sparse: true, // allow null values if challenge is public
+     
+    },
   },
   { timestamps: true }
 );
+// challengeSchema.index({ title:"text"});
 
-module.exports = mongoose.model("Challenge", challengeSchema);
+module.exports = mongoose.models.Challenge || mongoose.model("Challenge", challengeSchema);

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../component/context/AuthContext';
 import dayjs from 'dayjs';
+ import { useChallengeApi } from "../../api/challengeApi";
 import { 
   Calendar, 
   Award, 
@@ -19,6 +19,7 @@ const UpdateChallenge = () => {
   const { token } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
+  const {fetchChallengeById,updateChallengeAPI}=useChallengeApi();
 
   const [form, setForm] = useState({
     title: '',
@@ -32,14 +33,12 @@ const UpdateChallenge = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const baseUrl = import.meta.env.VITE_API_URL;
+  
 
   useEffect(() => {
     const fetchChallenge = async () => {
       try {
-        const res = await axios.get(`${baseUrl}/challenge/get/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetchChallengeById(id);
         const challenge = res.data.challenge;
 
         setForm({
@@ -78,9 +77,7 @@ const UpdateChallenge = () => {
     };
     
     try {
-      await axios.put(`${baseUrl}/challenge/update/${id}`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    await updateChallengeAPI(id,formData);
       setSuccess('Challenge updated successfully!');
       setTimeout(() => navigate('/challenges'), 1500);
     } catch (err) {

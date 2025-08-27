@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useAuth } from "../../component/context/AuthContext";
-import { ToastContainer, toast } from 'react-toastify';
+import {toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Modal from 'react-modal';
 import { 
@@ -16,26 +14,24 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+ import { useChallengeApi } from "../../api/challengeApi";
 
 Modal.setAppElement('#root'); // Replace with your app's root element id
 
 const DeleteChallenge = () => {
-  const { token } = useAuth();
+
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const baseUrl = import.meta.env.VITE_API_URL;
+  
+  const {deletePermanentlyChallenge,fetchSoftDeletedChallengeAPI,recoverChallengeAPI}=useChallengeApi()
 
   const fetchSoftDeletedChallenges = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${baseUrl}/challenge/get-soft-deleted`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetchSoftDeletedChallengeAPI();
       if (res.data.success) {
         setChallenges(res.data.challenges);
       } else {
@@ -53,11 +49,7 @@ const DeleteChallenge = () => {
     try {
       const loadingToast = toast.loading("Recovering challenge...");
       
-      const res = await axios.patch(`${baseUrl}/challenge/recover/${id}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await recoverChallengeAPI(id);
 
       toast.dismiss(loadingToast);
       
@@ -90,11 +82,8 @@ const DeleteChallenge = () => {
     const loadingToast = toast.loading("Deleting challenge permanently...");
     
     try {
-      const res = await axios.delete(`${baseUrl}/challenge/delete/${selectedChallenge._id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+ 
+     const res= await deletePermanentlyChallenge(selectedChallenge._id);
 
       toast.dismiss(loadingToast);
       
@@ -131,7 +120,7 @@ const DeleteChallenge = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+    
       
       <div className="bg-white shadow-lg rounded-xl p-6 mb-8">
         <div className="flex justify-between items-center mb-6">

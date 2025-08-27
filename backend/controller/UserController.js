@@ -3,6 +3,11 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { uploadToCloudinary } = require('../helpers/cloudinaryHelpers');
 const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
+const {
+  rankUsers,
+} = require('../utils/leaderboardSort');
+
 
 
 
@@ -181,7 +186,7 @@ const uploadUserProfile = async (req, res) => {
     let profileImagePublicId = user.profileImagePublicId;
 
     // If new image uploaded
-    if (req.file) {
+    if (req.file) { // this req.file is set by multer middleware
       // Delete old image from Cloudinary (if exists)
       if (user.profileImagePublicId) {
         await cloudinary.uploader.destroy(user.profileImagePublicId);
@@ -191,6 +196,8 @@ const uploadUserProfile = async (req, res) => {
       const uploadResult = await uploadToCloudinary(req.file.path);
       profileImage = uploadResult.url;
       profileImagePublicId = uploadResult.publicId;
+      // Remove the file from local storage after uploading to Cloudinary
+      fs.unlinkSync(req.file.path);
     }
 
     const trimmedBio = bio?.trim();
@@ -268,7 +275,7 @@ const skipUserProfile = async (req, res) => {
 
 const getUserData = async (req, res) => {
   try {
-    const user = await User.findById(req.userInfo.userId).select("-password");
+    const user = await User.findById(req.userInfo.userId).select("-password -profileImagePublicId");
 
     if (!user) {
       return res.status(404).json({
@@ -316,36 +323,64 @@ const getOtherUserData = async (req, res) => {
 };
 
 
-const getTopUsers = async (req,res) => {
+const getTopUsers = async (req, res) => {
   try {
-    const topUsers = await User.find({ isBanned: false, points: { $gte: 0 } }) // skip banned users if needed
-      .sort({ points: -1 })
-      .limit(10)
-      .select('username points profileImage');
-       // select only what you need
+    // Fetch all eligible users (exclude banned; ensure numeric points)
+    // NOTE: If user count grows huge, consider projecting only needed fields
+    // and/or streaming + heap (I can help you implement that later).
+    const users = await User.find(
+      { isBanned: false, points: { $gte: 0 } },
+      'username points profileImage createdAt updatedAt' // projection keeps payload small
+    ).lean();
 
-        if (!topUsers || topUsers.length === 0) {
-        return res.status(404).json({
+    if (!users || users.length === 0) {
+      return res.status(404).json({
         success: false,
-        message: " No top users found.",
+        message: 'No top users found.',
       });
-
-  
     }
-    res.status(200).json({
+
+    const topUsers = rankUsers(users, 10);
+
+    return res.status(200).json({
       success: true,
-      message: "Top users fetched successfully.",
+      message: 'Top users fetched successfully.',
       topUsers,
     });
-    
   } catch (error) {
-    console.error("Error fetching top users:", error);
-    res.status(500).json({
+    console.error('Error fetching top users:', error);
+    return res.status(500).json({
       success: false,
-      message: "Something went wrong while fetching top users.",
+      message: 'Something went wrong while fetching top users.',
     });
   }
 };
+
+module.exports = { getTopUsers };
+
+
+// ============================================================================
+// README Snippet (for documentation / report)
+// ----------------------------------------------------------------------------
+// ### Leaderboard Ranking Algorithm
+// We implemented a custom ranking algorithm so we can demonstrate algorithmic
+// thinking and tune how users are ranked without depending solely on MongoDB's
+// built‑in sort.
+//
+// **Score Formula**
+//   score = points * 1 + (active_in_last_7_days ? +15 : 0)
+//
+// **Ranking Steps**
+// 1. Fetch eligible users (exclude banned, nonnegative points).
+// 2. Compute composite score for each.
+// 3. Sort with a custom stable Merge Sort (O(n log n)).
+// 4. Apply deterministic tie‑breakers (points → recent activity → account age → id).
+// 5. Return top 10.
+//
+// This gives us full control, makes it easy to extend new weights (wins, streaks),
+// and provides a clear algorithm we can explain in class.
+// ============================================================================
+
 
 
 

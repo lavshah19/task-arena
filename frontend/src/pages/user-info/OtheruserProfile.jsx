@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 
 import { 
   Edit2, 
-  User, 
+  User2, 
   Mail, 
   Shield, 
   MessageCircle, 
@@ -86,17 +86,13 @@ const OtheruserProfile = () => {
       <div className="relative pt-16 mb-8">
         <div className="absolute left-1/2 transform -translate-x-1/2 -top-12">
           <div className="rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
-            {User.profileImage ? (
+            
               <img
-                src={User.profileImage}
+                src={User.profileImage || `https://api.dicebear.com/9.x/adventurer/svg?seed=${user.username}`}
                 alt="Profile"
                 className="w-24 h-24 object-cover"
               />
-            ) : (
-              <div className="w-24 h-24 bg-blue-100 flex items-center justify-center">
-                <User size={36} className="text-blue-500" />
-              </div>
-            )}
+          
           </div>
         </div>
         

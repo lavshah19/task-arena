@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../component/context/AuthContext';
 import { Trophy, Medal, Loader2, AlertCircle, User, Crown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Leaderboard = () => {
   const { token } = useAuth();
@@ -9,7 +10,7 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const baseUrl = import.meta.env.VITE_API_URL;
-
+   const navigate = useNavigate();
   useEffect(() => {
     const fetchTopUsers = async () => {
       try {
@@ -26,6 +27,10 @@ const Leaderboard = () => {
 
     fetchTopUsers();
   }, [token]);
+//   useEffect(()=>{
+// console.log(topUsers);
+
+//   },[topUsers])
 
   // Get medal color based on rank
   const getMedalColor = (index) => {
@@ -87,6 +92,7 @@ const Leaderboard = () => {
         <ol className="space-y-3">
           {topUsers.map((user, index) => (
             <li
+            onClick={()=>navigate(`/profile/${user._id}`)}
               key={user._id}
               className={`flex items-center justify-between p-4 rounded-lg shadow-sm transition-all hover:shadow-md ${getRowBackground(index)}`}
             >

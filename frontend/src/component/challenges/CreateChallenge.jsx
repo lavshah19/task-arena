@@ -1,65 +1,59 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../component/context/AuthContext';
-import { 
-  Trophy, 
-  Calendar, 
-  FileText, 
-  AlertCircle, 
-  CheckCircle, 
-  ArrowLeft, 
-  Award, 
-  Star, 
-  Loader2 
-} from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useChallengeApi } from "../../api/challengeApi";
+import {
+  Trophy,
+  Calendar,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+  Award,
+  Star,
+  Loader2,
+} from "lucide-react";
 
 const CreateChallenge = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [points, setPoints] = useState('');
-  const [bonusPoints, setBonusPoints] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [points, setPoints] = useState("");
+  const [bonusPoints, setBonusPoints] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { token } = useAuth();
   const navigate = useNavigate();
-  const baseUrl = import.meta.env.VITE_API_URL;
+
+  const { createChallenge } = useChallengeApi();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setLoading(true);
 
-    try {
-      const res = await axios.post(
-        `${baseUrl}/challenge/create`,
-        {
-          title,
-          description,
-          dueDate,
-          points: Number(points),
-          bonusPoints: Number(bonusPoints),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const challengeData = {
+      title,
+      description,
+      dueDate,
+      points: Number(points),
+      bonusPoints: Number(bonusPoints),
+      isPrivate,
+    };
 
-      setSuccess('Challenge created successfully!');
-      setTitle('');
-      setDescription('');
-      setDueDate('');
-      setPoints('');
-      setBonusPoints('');
-      setTimeout(() => navigate('/challenges'), 1500);
+    try {
+      await createChallenge(challengeData);
+      setSuccess("Challenge created successfully!");
+      setTitle("");
+      setDescription("");
+      setDueDate("");
+      setPoints("");
+      setBonusPoints("");
+      setTimeout(() => navigate("/challenges"), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create challenge');
+      setError(err.response?.data?.message || "Failed to create challenge");
     } finally {
       setLoading(false);
     }
@@ -72,8 +66,8 @@ const CreateChallenge = () => {
           <Trophy className="mr-2" size={24} />
           Create New Challenge
         </h2>
-        <button 
-          onClick={() => navigate('/challenges')}
+        <button
+          onClick={() => navigate("/challenges")}
           className="flex items-center text-gray-600 hover:text-blue-700 transition-colors"
         >
           <ArrowLeft size={18} className="mr-1" />
@@ -132,7 +126,7 @@ const CreateChallenge = () => {
               Due Date
             </label>
             <input
-              type="date"
+              type="datetime-local"
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
@@ -168,6 +162,20 @@ const CreateChallenge = () => {
               placeholder="25"
             />
           </div>
+          <div className="space-y-1 col-span-1 md:col-span-3">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+              />
+              <span className="text-gray-700">Make this challenge private</span>
+            </label>
+            <p className="text-sm text-gray-500">
+              Private challenges are only visible to you and invited participants.
+            </p>
+            </div>
         </div>
 
         <div className="flex justify-end pt-4">

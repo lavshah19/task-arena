@@ -4,7 +4,7 @@ import { useAuth } from "../../component/context/AuthContext";
 import CreateProgressForm from "./CreateProgressForm";
 import UpdateProgressForm from "./UpdateProgressForm";
 import Modal from "react-modal";
-import { toast, ToastContainer } from "react-toastify";
+import { toast} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { 
   Clipboard, 
@@ -133,16 +133,17 @@ const UserProgressSection = ({ challenge, fetchChallenge }) => {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 col-span-1 transition-all hover:shadow-lg overflow-hidden">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       
       <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
         <Clipboard size={20} className="text-blue-600" />
         <h3 className="text-lg font-bold text-gray-800">User Progress</h3>
       </div>
 
-      {!hasSubmitted && challenge.status !== "completed" && (
+      {!hasSubmitted && !["completed", "cancelled"].includes(challenge.status) && (
         <div className="mb-6">
-          {!showForm ? (
+          
+          { !showForm ? (
             <button
               onClick={() => setShowForm(true)}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"

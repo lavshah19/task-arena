@@ -17,8 +17,11 @@ const {
     myParticipantChallenges,
     recoverSoftDeletedChallenge,
     removeChallengeProgress,
-    ChallengeWinner
+    ChallengeWinner,
+    getPrivateChallenge,
+    getAllPrivateChallenges
 } = require('../controller/challengeController');
+const upload =require('../middleware/fileUpload-middleware')
 
 const authMiddleware = require('../middleware/auth-Middleware'); // middleware to add req.user
 
@@ -27,6 +30,8 @@ router.delete('/delete/:id', authMiddleware, deleteChallenge);
 
 router.get("/get", getAllChallenges);
 router.get("/get/:id", getSingleChallenge);
+router.get("/get-private/:inviteCode", authMiddleware, getPrivateChallenge);
+router.get("/get-all-private", authMiddleware, getAllPrivateChallenges);
 
 // Protected routes
 router.put("/update/:id", authMiddleware, updateChallenge);
@@ -35,9 +40,9 @@ router.patch("/soft-delete/:id", authMiddleware, softDeleteChallenges);
 router.post("/join/:id", authMiddleware, joinChallenges);
 router.post("/leave/:id", authMiddleware, leaveChallenge);
 
-router.post("/createprogress/:id", authMiddleware, createChallengeProgress);
-router.patch("/updateprogress/:id", authMiddleware, updateChallengeProgress);
-router.delete('/remove-progress/:id', authMiddleware, removeChallengeProgress);
+router.post("/createprogress/:id", authMiddleware, upload.single('file'), createChallengeProgress);
+router.patch("/updateprogress/:id", authMiddleware, upload.single('file') ,updateChallengeProgress);
+router.delete('/remove-progress/:id', authMiddleware,removeChallengeProgress);
 
 
 router.post("/vote/:id", authMiddleware, voteForParticipant);

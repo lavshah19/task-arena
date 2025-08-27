@@ -1,94 +1,64 @@
-import React from 'react';
-import { 
-  Calendar, 
-  Award, 
-  Users, 
-  Edit, 
-  Trash2, 
-  LogOut, 
+
+import {
+  Calendar,
+  Award,
+  Users,
+  Edit,
+  Trash2,
+  LogOut,
   LogIn,
   ExternalLink,
   Clock,
-  Star
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+  Star,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-
-
-
-const formatDate = (date) => {
-  const d = new Date(date);
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-};
-
-const getTimeFromNow = (date) => {
-  const now = new Date();
-  const dueDate = new Date(date);
-  const diffTime = dueDate - now;
-  
-  if (diffTime < 0) return "Past due";
-  
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Tomorrow";
-  return `in ${diffDays} days`;
-};
+import { getTimeFromNow, formatDate, passedDueDate } from "../../utils/dateUtils";
+ import { useChallengeApi } from "../../api/challengeApi";
+ import {  toast } from 'react-toastify';
 
 const ChallengeCard = ({ challenge, actions }) => {
-  const { fetchChallenges, token, user } = actions;
+  const { fetchChallenges,user } = actions;
   const isCreator = challenge.creator?._id === user?._id;
-  const isParticipant = challenge.participants.some(p => p._id === user?._id);
-  const bsaseUrl = import.meta.env.VITE_API_URL;
+  const isParticipant = challenge.participants.some((p) => p._id === user?._id);
 
-  
-  // Mock navigation function (in actual implementation, this would use useNavigate from react-router-dom)
   const navigate = useNavigate();
+  const { joinChallenge, leaveChallenge, softDeleteChallenge } = useChallengeApi();
 
-const handleJoin = async () => {
-  try {
-    await axios.post(
-      `${bsaseUrl}/challenge/join/${challenge._id}`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    fetchChallenges();
-  } catch (error) {
-    console.error("Failed to join challenge:", error);
-  }
-};
+  const handleJoin = async () => {
+    try {
+      await joinChallenge(challenge._id);
+      toast.success("Successfully joined the challenge!");
+      fetchChallenges();
+    } catch (error) {
+      console.error("Failed to join challenge:", error);
+      toast.error("Failed to join challenge. Please try again.");
 
- const handleLeave = async () => {
-  try {
-    await axios.post(
-      `${bsaseUrl}/challenge/leave/${challenge._id}`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    fetchChallenges();
-  } catch (error) {
-    console.error("Failed to leave challenge:", error);
-  }
-};
+    }
+  };
 
-const handleDelete = async () => {
-  try {
-    await axios.patch(
-      `${bsaseUrl}/challenge/soft-delete/${challenge._id}`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    fetchChallenges();
-  } catch (error) {
-    console.error("Failed to delete challenge:", error);
-  }
-};
+  const handleLeave = async () => {
+    try {
+      await leaveChallenge(challenge._id);
+      toast.success("Successfully left the challenge!");
+      fetchChallenges();
+    } catch (error) {
+      console.error("Failed to leave challenge:", error);
+      toast.error("Failed to leave challenge. Please try again.");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      
+      await softDeleteChallenge(challenge._id);
+      toast.success("Challenge deleted successfully!");
+      fetchChallenges();
+    } catch (error) {
+      console.error("Failed to delete challenge:", error);
+      toast.error("Failed to delete challenge. Please try again.");
+    }
+  };
 
   const handleUpdate = () => {
     navigate(`/updatechallenge/${challenge._id}`);
@@ -101,39 +71,60 @@ const handleDelete = async () => {
   // Set card border color based on status
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'border-orange-300';
-      case 'in-progress': return 'border-blue-300';
-      case 'completed': return 'border-green-300';
-      case 'cancelled': return 'border-gray-300';
-      default: return 'border-purple-300';
+      case "pending":
+        return "border-orange-300";
+      case "in-progress":
+        return "border-blue-300";
+      case "completed":
+        return "border-green-300";
+      case "cancelled":
+        return "border-gray-300";
+      default:
+        return "border-purple-300";
     }
   };
 
   return (
-    <div className={`p-5 border-2 ${getStatusColor(challenge.status)} rounded-xl shadow-sm hover:shadow-lg bg-white transition-all duration-300`}>
+    <div
+      className={`p-5 border-2 ${getStatusColor(
+        challenge.status
+      )} rounded-xl shadow-sm hover:shadow-lg bg-white transition-all duration-300`}
+    >
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-xl font-semibold text-blue-600 line-clamp-2">{challenge.title}</h3>
+        <h3 className="text-xl font-semibold text-blue-600 line-clamp-2">
+          {challenge.title}
+        </h3>
+        <div className="flex items-center gap-2">
         <div className="bg-gray-100 px-2 py-1 rounded text-xs font-medium text-gray-600">
           {challenge.status}
+          
         </div>
+         <div className="text-gray-500 text-xs font-bold">
+          {challenge.isPrivate ? "Private" : "Public"}
+          </div>
       </div>
+        </div>
+       
 
-      <p className="text-gray-700 mb-4 line-clamp-2 text-sm">{challenge.description}</p>
-      
+      <p className="text-gray-700 mb-4 line-clamp-2 text-sm">
+        {challenge.description}
+      </p>
+
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 border-b pb-3">
         {challenge.creator?.profileImage ? (
-          <img 
-            src={challenge.creator.profileImage} 
-            alt="creator" 
-            className="w-8 h-8 rounded-full object-cover border border-gray-200" 
+          <img
+            src={challenge.creator.profileImage}
+            alt="creator"
+            className="w-8 h-8 rounded-full object-cover border border-gray-200"
           />
         ) : (
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 font-medium">
-            {challenge.creator?.username?.charAt(0).toUpperCase() || '?'}
+            {challenge.creator?.username?.charAt(0).toUpperCase() || "?"}
           </div>
         )}
         <div>
-          Created by <span className="font-medium">{challenge.creator?.username}</span>
+          Created by{" "}
+          <span className="font-medium">{challenge.creator?.username}</span>
         </div>
       </div>
 
@@ -142,17 +133,17 @@ const handleDelete = async () => {
           <Users className="w-4 h-4" />
           <span>{challenge.participants.length} participants</span>
         </div>
-        
+
         <div className="flex items-center gap-1 text-gray-600">
           <Calendar className="w-4 h-4" />
           <span>{formatDate(challenge.dueDate)}</span>
         </div>
-        
+
         <div className="flex items-center gap-1 text-gray-600">
           <Clock className="w-4 h-4" />
           <span>{getTimeFromNow(challenge.dueDate)}</span>
         </div>
-        
+
         <div className="flex items-center gap-1 text-gray-600">
           <Star className="w-4 h-4" />
           <span>{challenge.points} points</span>
@@ -199,24 +190,26 @@ const handleDelete = async () => {
               <span>Delete</span>
             </button>
           </>
-        ) :challenge.status!=="completed" && (  
-         isParticipant ?  (
-          <button
-            onClick={handleLeave}
-            className="px-3 py-1.5 text-sm rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors flex items-center gap-1"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Leave</span>
-          </button>
         ) : (
-          <button
-            onClick={handleJoin}
-            className="px-3 py-1.5 text-sm rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Join</span>
-          </button>
-        ))}
+          !["completed", "cancelled"].includes(challenge.status)  && !passedDueDate(challenge.dueDate) &&
+          (isParticipant ? (
+            <button
+              onClick={handleLeave}
+              className="px-3 py-1.5 text-sm rounded-full bg-pink-100 text-pink-700 hover:bg-pink-200 transition-colors flex items-center gap-1"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Leave</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleJoin}
+              className="px-3 py-1.5 text-sm rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Join</span>
+            </button>
+          ))
+        )}
       </div>
     </div>
   );

@@ -61,4 +61,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("User", userSchema);
+
+module.exports = mongoose.models.User || mongoose.model("User", userSchema);
+// This code defines a Mongoose schema for a User model in a Node.js application.

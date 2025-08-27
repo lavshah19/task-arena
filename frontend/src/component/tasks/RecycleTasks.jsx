@@ -4,7 +4,7 @@ import { useAuth } from '../../component/context/AuthContext';
 import { Link } from 'react-router-dom';
 import { Trash2, RefreshCw, Plus, Archive, AlertCircle, AlertTriangle } from 'lucide-react';
 import Modal from 'react-modal';
-import { ToastContainer, toast } from 'react-toastify';
+import {  toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Set app element for accessibility (usually your root element)
@@ -103,8 +103,7 @@ const RecycleTasks = () => {
 
   return (
     <div className="max-w-5xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg">
-      {/* Toast Container */}
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+     
       
       {/* Delete Confirmation Modal */}
       <Modal
