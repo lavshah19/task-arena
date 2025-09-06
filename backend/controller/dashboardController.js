@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const Challenge = require("../models/Challenge");
+const Challenge = require("../models/challenge");
 
 
 
