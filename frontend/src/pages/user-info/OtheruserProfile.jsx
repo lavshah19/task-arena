@@ -15,7 +15,10 @@ import {
   Twitter, 
   CheckCircle, 
   XCircle, 
-  Loader
+  Loader,
+  UserPlus,
+  UserMinus,
+  Users
 } from 'lucide-react';
 
 const OtheruserProfile = () => {
@@ -23,6 +26,10 @@ const OtheruserProfile = () => {
   const [User, setUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const navigate = useNavigate();
   const { id } = useParams();
   const baseUrl = import.meta.env.VITE_API_URL;
@@ -36,6 +43,13 @@ const OtheruserProfile = () => {
           },
         });
         setUser(res.data.user);
+        setFollowersCount(res.data.followersCount);
+        setFollowingCount(res.data.followingCount);
+        
+        // Check if current user is following this user
+        if (res.data.user.followers && user?._id) {
+          setIsFollowing(res.data.user.followers.includes(user._id));
+        }
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch profile');
       } finally {
@@ -44,7 +58,30 @@ const OtheruserProfile = () => {
     };
 
     fetchUserData();
-  }, [token]);
+  }, [token, id, user?._id]);
+
+  const handleFollowToggle = async () => {
+    if (followLoading) return;
+    
+    setFollowLoading(true);
+    try {
+      const res = await axios.put(`${baseUrl}/auth/toggle-followers/${id}`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (res.data.success) {
+        setIsFollowing(res.data.isFollowing);
+        setFollowersCount(res.data.followersCount);
+      }
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+      setError(err.response?.data?.message || 'Failed to update follow status');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex justify-center items-center h-screen">
@@ -69,16 +106,37 @@ const OtheruserProfile = () => {
       {/* Background header */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-blue-500 to-blue-600 rounded-t-xl"></div>
       
-      {/* Edit Button */}
-     
-
-{User._id === user._id && (<Link
-  to="/profile-edit"
-  className="absolute top-4 right-4 bg-white text-blue-600 px-4 py-2 rounded-lg flex items-center gap-1 hover:bg-blue-50 transition duration-150 shadow-md cursor-pointer"
->
-  <Edit2 size={16} />
-  <span>Edit Profile</span>
-</Link>)}
+      {/* Action Buttons */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        {User._id === user._id ? (
+          <Link
+            to="/profile-edit"
+            className="bg-white text-blue-600 px-4 py-2 rounded-lg flex items-center gap-1 hover:bg-blue-50 transition duration-150 shadow-md cursor-pointer"
+          >
+            <Edit2 size={16} />
+            <span>Edit Profile</span>
+          </Link>
+        ) : (
+          <button
+            onClick={handleFollowToggle}
+            disabled={followLoading}
+            className={`px-4 py-2 rounded-lg flex items-center gap-1 transition duration-150 shadow-md font-medium ${
+              isFollowing
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            } ${followLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {followLoading ? (
+              <Loader size={16} className="animate-spin" />
+            ) : isFollowing ? (
+              <UserMinus size={16} />
+            ) : (
+              <UserPlus size={16} />
+            )}
+            <span>{followLoading ? 'Loading...' : isFollowing ? 'Unfollow' : 'Follow'}</span>
+          </button>
+        )}
+      </div>
 
 
 
@@ -110,7 +168,7 @@ const OtheruserProfile = () => {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-blue-50 p-4 rounded-xl flex items-center space-x-3">
           <Award size={24} className="text-blue-600" />
           <div>
@@ -125,6 +183,20 @@ const OtheruserProfile = () => {
             <p className={`font-medium ${User.isProfileComplete ? 'text-green-600' : 'text-yellow-500'}`}>
               {User.isProfileComplete ? 'Complete' : 'Incomplete'}
             </p>
+          </div>
+        </div>
+        <div className="bg-purple-50 p-4 rounded-xl flex items-center space-x-3">
+          <Users size={24} className="text-purple-600" />
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-medium">Followers</p>
+            <p className="text-xl font-bold text-purple-600">{followersCount}</p>
+          </div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-xl flex items-center space-x-3">
+          <User2 size={24} className="text-orange-600" />
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-medium">Following</p>
+            <p className="text-xl font-bold text-orange-600">{followingCount}</p>
           </div>
         </div>
       </div>

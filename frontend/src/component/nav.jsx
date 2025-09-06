@@ -13,6 +13,7 @@ import {
   LogOut,
   User,
   Trophy,
+  BarChart,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -99,6 +100,10 @@ const Navbar = () => {
                   )}
                   <span className="text-gray-700">{user?.username}</span>
                 </Link>
+                <Link to="/dashboard" className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition duration-150">
+                  <BarChart size={18} />
+                  <span>Dashboard</span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-1 text-red-500 hover:text-red-700 transition duration-150"
@@ -166,7 +171,11 @@ const Navbar = () => {
                 )}
                 <span className="text-gray-700">{user?.username}</span>
               </Link>
-              <button
+              <Link to="/dashboard" className="flex items-center space-x-2 py-2 text-gray-700 hover:text-blue-600 transition duration-150">
+                <BarChart size={18} />
+                <span>Dashboard</span>
+              </Link>
+                  <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 py-2 text-red-500 hover:text-red-700 transition duration-150"
               >

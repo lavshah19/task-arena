@@ -55,12 +55,18 @@ const userSchema = new mongoose.Schema(
     },
     isFirstLogin: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
+
+    // New fields for social features
+    followers: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    ],
+    following: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    ],
   },
   { timestamps: true }
 );
 
-
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);
-// This code defines a Mongoose schema for a User model in a Node.js application.

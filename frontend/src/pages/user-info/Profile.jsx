@@ -14,7 +14,10 @@ import {
   Twitter, 
   CheckCircle, 
   XCircle, 
-  Loader
+  Loader,
+  UserPlus,
+  UserMinus,
+  Users
 } from 'lucide-react';
 
 const Profile = () => {
@@ -22,6 +25,8 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_API_URL;
 
@@ -34,6 +39,8 @@ const Profile = () => {
           },
         });
         setUser(res.data.user);
+        setFollowersCount(res.data.followersCount);
+        setFollowingCount(res.data.followingCount);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch profile');
       } finally {
@@ -112,7 +119,7 @@ const Profile = () => {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-blue-50 p-4 rounded-xl flex items-center space-x-3">
           <Award size={24} className="text-blue-600" />
           <div>
@@ -127,6 +134,20 @@ const Profile = () => {
             <p className={`font-medium ${user.isProfileComplete ? 'text-green-600' : 'text-yellow-500'}`}>
               {user.isProfileComplete ? 'Complete' : 'Incomplete'}
             </p>
+          </div>
+        </div>
+        <div className="bg-purple-50 p-4 rounded-xl flex items-center space-x-3">
+          <Users size={24} className="text-purple-600" />
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-medium">Followers</p>
+            <p className="text-xl font-bold text-purple-600">{followersCount}</p>
+          </div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-xl flex items-center space-x-3">
+          <User size={24} className="text-orange-600" />
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-medium">Following</p>
+            <p className="text-xl font-bold text-orange-600">{followingCount}</p>
           </div>
         </div>
       </div>

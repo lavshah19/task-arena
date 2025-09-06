@@ -23,6 +23,7 @@ import Leaderboard from './component/Leaderboard';
 import PrivateChallengeJoin from './component/challenges/private/PrivateChallengeJoin';
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
+import Dashboard from './pages/dashboard/Dashboard';
 
 function App() {
   const { token } = useAuth();
@@ -109,6 +110,10 @@ function App() {
            <Route
           path="/join-private/:inviteCode"
           element={token ? <PrivateChallengeJoin /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/dashboard"
+          element={token ? <Dashboard /> : <Navigate to="/login" replace />}
         />
       </Routes>
        <ToastContainer

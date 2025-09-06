@@ -3,6 +3,7 @@ const Challenge = require("../models/challenge");
 const User = require("../models/User");
 const fs = require("fs");
 const cloudinary = require("../config/cloudinary");
+const SendMailToFollowers=require("../utils/sendMail");
 
 // Create a new challenge
 const createChallenge = async (req, res) => {
@@ -49,6 +50,16 @@ const createChallenge = async (req, res) => {
     });
 
     await challenge.save();
+
+        // ✅ Send notifications if challenge is public
+        if (!isPrivate) {
+          const creator = await User.findById(creatorId).populate("followers", "email");
+          const followerEmails = creator.followers.map(f => f.email);
+    
+          if (followerEmails.length > 0) {
+            SendMailToFollowers(followerEmails, challenge._id, challenge.title,creator.username);
+          }
+        }
 
     res.status(201).json({
       success: true,

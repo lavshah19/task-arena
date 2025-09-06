@@ -26,7 +26,7 @@ const userRegistration = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "A user with this username or email already exists. Please try a different one.",
+          "A user with this username or email already exists. Please try a different one.", 
       });
     }
 
@@ -89,7 +89,7 @@ const userLogin = async (req, res) => {
         role: user.role,
       },
       process.env.JWT_SECRET_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "3h" }
     );
 
     res.status(200).json({
@@ -288,6 +288,8 @@ const getUserData = async (req, res) => {
       success: true,
       message: "User data fetched successfully.",
       user,
+      followersCount: user.followers.length,
+      followingCount: user.following.length,
     });
   } catch (error) {
     console.error(error);
@@ -312,6 +314,8 @@ const getOtherUserData = async (req, res) => {
       success: true,
       message: "User data fetched successfully.",
       user,
+      followersCount: user.followers.length,
+      followingCount: user.following.length,
     });
   } catch (error) {
     console.error(error);
@@ -356,7 +360,65 @@ const getTopUsers = async (req, res) => {
   }
 };
 
-module.exports = { getTopUsers };
+const toggleFollowers = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found."
+      });
+    }
+
+    const currentUser = await User.findById(req.userInfo.userId);
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Current user not found."
+      });
+    }
+
+    // Prevent self-follow
+    if (user._id.toString() === currentUser._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot follow yourself."
+      });
+    }
+
+    // Check if already following
+    if (user.followers.includes(currentUser._id)) {
+      // Unfollow
+      user.followers.pull(currentUser._id);
+      currentUser.following.pull(user._id);
+    } else {
+      // Follow
+      user.followers.push(currentUser._id);
+      currentUser.following.push(user._id);
+    }
+
+    await user.save();
+    await currentUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Follow status updated successfully.",
+      followersCount: user.followers.length,
+      followingCount: currentUser.following.length,
+      isFollowing: user.followers.includes(currentUser._id)
+    });
+
+  } catch (error) {
+    console.error("Error during toggle followers:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while toggling follow."
+    });
+  }
+};
+
+
+module.exports = { userRegistration,userLogin,uploadUserProfile,skipUserProfile,changePassword,getUserData,getOtherUserData,getTopUsers,toggleFollowers};
 
 
 // ============================================================================
@@ -380,9 +442,3 @@ module.exports = { getTopUsers };
 // This gives us full control, makes it easy to extend new weights (wins, streaks),
 // and provides a clear algorithm we can explain in class.
 // ============================================================================
-
-
-
-
-
-module.exports = { userRegistration,userLogin,uploadUserProfile,skipUserProfile,changePassword,getUserData,getOtherUserData,getTopUsers};

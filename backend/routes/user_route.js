@@ -1,6 +1,6 @@
 const express =require('express');
 const router=express.Router();
-const {userRegistration,userLogin,uploadUserProfile,skipUserProfile,getUserData,getOtherUserData,getTopUsers}=require('../controller/UserController');
+const {userRegistration,userLogin,uploadUserProfile,skipUserProfile,getUserData,getOtherUserData,getTopUsers,toggleFollowers}=require('../controller/UserController');
 const authMiddleware =require("../middleware/auth-Middleware");
 const uploadMiddleware = require("../middleware/upload-middleware");
 router.post('/register',userRegistration);
@@ -10,6 +10,7 @@ router.put("/profile-skip",authMiddleware,skipUserProfile); // now its not use m
 router.get('/get-user-info',authMiddleware,getUserData);
 router.get('/get-other-user-info/:id',authMiddleware,getOtherUserData);
 router.get('/get-top-users',authMiddleware,getTopUsers);
+router.put('/toggle-followers/:id',authMiddleware,toggleFollowers);
 
 // router.get('/test',authMiddleware,(req,res)=>{
 //     res.status(200).json({
